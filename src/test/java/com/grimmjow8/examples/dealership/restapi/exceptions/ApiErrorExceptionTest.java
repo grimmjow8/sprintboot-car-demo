@@ -14,7 +14,7 @@ public class ApiErrorExceptionTest {
     private static final ApiErrorType notFound = ApiErrorType.OBJECT_NOT_FOUND;
 
     /**
-     * Test default resource bundle loaded with unknown @see java.util.Locale
+     * Test default resource bundle loaded with unknown @see java.util.Locale.
      */
     @Test
     public void testMissingResourceFile() {

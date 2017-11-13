@@ -3,7 +3,8 @@ package com.grimmjow8.examples.dealership.restapi.models;
 import java.util.Objects;
 
 /**
- * Car model.
+ * Model representation of Car information. 
+ * TODO: add Swagger annotations.
  */
 public class Car {
     private String id;
@@ -67,6 +68,7 @@ public class Car {
             return false;
         }
 
+        // intentionallty excluding ID from equals comparison
         Car car = (Car) obj;
         return Objects.equals(make, car.getMake())
                 && Objects.equals(model, car.getModel())

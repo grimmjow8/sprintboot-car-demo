@@ -16,7 +16,8 @@ import static com.grimmjow8.examples.dealership.restapi.servants.ResourcePaths.V
 import static com.grimmjow8.examples.dealership.restapi.servants.ResourcePaths.CAR_PATH;
 
 /**
- * Car controller class. Defines all car related endpoints.
+ * Controller layer for car data handling. Defines all car related endpoints.
+ * NOTE: No function headers since most of the functionality is within the service layer.
  */
 @RestController
 public class CarImpl {

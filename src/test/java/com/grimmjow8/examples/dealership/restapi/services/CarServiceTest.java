@@ -40,10 +40,11 @@ public class CarServiceTest extends AbstractTestNGSpringContextTests {
      */
     @Test
     public void testAddingDuplicateEntry() throws Exception {
-        // add item
+        // initial addition of the entry
         Car car = new Car("make", "model", 2010);
         service.addCar(car);
 
+        // all subsequent additions should fail
         try {
             service.addCar(car);
             fail("failed to throw api error");

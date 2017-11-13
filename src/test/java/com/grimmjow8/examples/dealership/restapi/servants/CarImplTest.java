@@ -14,9 +14,9 @@ public class CarImplTest extends BaseImplTest {
     private static final String V1_CAR_PATH = V1_PATH + CAR_PATH;
 
     /**
-     * Test adding car data via POST then a subsequent GET, using the ID from the response, validates the request.
+     * Test adding car data via POST. The initial request is validated via a subsequent GET on the car ID.
      */
-    @Test()
+    @Test
     public void testAddingCar() {
         // add car information
         Car expected = new Car("make1", "model1", 1996);

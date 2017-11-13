@@ -8,7 +8,9 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 /**
- * Generic error handling for the api.
+ * Error handling for the api. This particular api is user facing. So any strings should
+ * be localized. A separate exception mechanism should be added for internal application
+ * error handling.
  */
 public class ApiErrorException extends Exception {
     public static final String RESOURCE_NAME = "errorStrings";
@@ -34,11 +36,13 @@ public class ApiErrorException extends Exception {
     }
 
     /**
-     * Creates an ApiError exception.
+     * Creates an ApiError exception that can later be thrown. Based on the error type
+     * placeholders within the message will be populated with caller data. The data should
+     * provide more information to the user, aiding in diagnosing the problem.
      *
      * @param type error type
      * @param locale user locale
-     * @param arguments misc data to include in the error
+     * @param arguments misc data to include in the error message
      * @return api error exception
      */
     public static ApiErrorException mkApiErrorException(ApiErrorType type, Locale locale, Object... arguments) {
@@ -64,7 +68,7 @@ public class ApiErrorException extends Exception {
     }
 
     /**
-     * Creates an ApiError exception.
+     * Creates an ApiError exception that ca later be thrown.
      *
      * @param type error type
      * @param arguments misc data to include in the error

@@ -26,3 +26,9 @@ Usage
     - $ curl -X GET localhost:8080/v1/car
     - $ curl -X POST -H "Content-Type: application/json" -d '{"make":"make1","model":"model1","year":2006}' localhost:8080/v1/car
     - $ curl -X DELETE -H "Content-Type: application/json" localhost:8080/v1/car/4b66ff46-fd55-4c0e-b882-7e5d36802622
+
+Future
+====
+- [ ] Add Swagger
+- [ ] Add Travis/CI pipeline
+- [ ] Refactor build process

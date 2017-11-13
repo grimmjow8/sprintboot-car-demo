@@ -13,16 +13,22 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Service layer for car data handling. Manages additions, deletions, and lookups of car
+ * information. Data stored in memory and will not survice a restart of the application.
+ */
 @Service
 public class CarService {
     private static final Logger LOG = LoggerFactory.getLogger(CarService.class);
     private static final ConcurrentHashMap<String, Car> storage = new ConcurrentHashMap<>();
 
     /**
-     * Add car to data store.
+     * Add a single car instance to the data store. Checks if the new car details are a duplicate
+     * of an existing entry before adding.
      *
      * @param car instance to add to the data store
      * @return car instance with id
+     * @throws ApiErrorException on duplicate entry
      */
     @NotNull
     public Car addCar(@NotNull final Car car) throws ApiErrorException {
@@ -35,7 +41,7 @@ public class CarService {
     }
 
     /**
-     * Get all cars.
+     * Retrieve information on all cars.
      *
      * @return list of cars
      */
@@ -45,43 +51,44 @@ public class CarService {
     }
 
     /**
-     * Get a single car.
+     * Retrieve information on a single car.
      *
      * @param id lookup id
-     * @return car instance
+     * @return car details
+     * @throws ApiErrorException if car id does not exist
      */
     @NotNull
     public Car getCar(@NotNull final String id) throws ApiErrorException {
-        checkId(id);
+        checkIdExists(id);
         LOG.info("Retrieving car with id: {}", id);
         return storage.get(id);
     }
 
     /**
-     * Delete car from data store.
+     * Delete car information from the data store.
      *
      * @param id lookup id
      */
     public void removeCar(@NotNull String id) throws ApiErrorException {
-        checkId(id);
+        checkIdExists(id);
         storage.remove(id);
         LOG.info("Removing car with id: {}, total entries: {}", id, storage.size());
     }
 
     /**
-     * Check if ID exists within data store, throw error if lookup fails.
+     * Throws error if car ID does not exist within data store.
      *
      * @param id lookup id
      * @throws ApiErrorException if lookup for id fails
      */
-    private void checkId(@NotNull final String id) throws ApiErrorException {
+    private void checkIdExists(@NotNull final String id) throws ApiErrorException {
         if (!storage.containsKey(id)) {
             throw ApiErrorException.mkApiErrorException(ApiErrorType.OBJECT_NOT_FOUND, id);
         }
     }
 
     /**
-     * Check if car already exists within data store.
+     * Throws error if given car details already exist within data store.
      *
      * @param car lookup item
      * @throws ApiErrorException if duplicate entry detected
