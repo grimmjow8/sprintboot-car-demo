@@ -29,7 +29,7 @@ Usage
 
 Assumptions/Design Decisions
 ====
-Below are a list of assumptions made during development:
+Below is a list of assumptions and design decisions made during development:
 - No update of car information, information is added & removed all at once.
 - Limited scope by only supporting the following fields: make, model, year.
 - Stored information in-memory using a ConcurrentHashMap.
