@@ -4,6 +4,7 @@ import com.bmuschko.gradle.docker.tasks.container.DockerStartContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerWaitContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerCopyFileFromContainer
 
 
 buildscript {
@@ -65,6 +66,8 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-jetty")
     compile("org.springframework.boot:spring-boot-starter-actuator")
 }
+
+//project.setBuildDir("./target")
 
 String getCurrentDir() {
     System.getProperty("user.dir")
@@ -137,7 +140,6 @@ task startContainer(type: DockerStartContainer) {
     dependsOn createContainer
 //    targetContainerId { createContainer.getContainerId() }
     targetContainerId { "springboot-dealership-app" }
-
 }
 
 task waitContainer(type: DockerWaitContainer) {
@@ -145,7 +147,20 @@ task waitContainer(type: DockerWaitContainer) {
 //    finalizedBy removeImage
 
     targetContainerId { "springboot-dealership-app" }
+//    doLast {
+//        copyContents
+//    }
 }
+
+//task copyContents(type: DockerCopyFileFromContainer) {
+//    dependsOn waitContainer
+//    hostPath "${currentDir}/build2"
+//    remotePath "/app/build"
+//    targetContainerId { "springboot-dealership-app" }
+//
+//}
+
+
 
 task clean1() {
     dependsOn removeImage
@@ -163,11 +178,37 @@ task buildApp() {
 
 
 
+task removeContainer1(type: DockerRemoveContainer) {
+    force = true
+    targetContainerId { "springboot-dealership-app-run" }
+    onError {
+        println "Failure removing run container"
+    }
+}
+
+task removeImage1(type: DockerRemoveImage) {
+    dependsOn removeContainer1
+    force = true
+    targetImageId { "grimmjow8/dealership-demo-run" }
+    onError {
+        println "Failure removing run image"
+    }
+
+}
+
+task createImage1(type: DockerBuildImage) {
+    inputDir = file('.')
+    dockerFile = file('Dockerfile.run')
+    tags = ['grimmjow8/dealership-demo-run']
+}
+
+
 // docker run -it -v "/home/grimmjow/data/development/ideaProjects/sprintboot-dealership-demo:/build" -p "8080:8080" grimmjow8/dealership-demo-build bash
 task createContainer1(type: DockerCreateContainer) {
+    dependsOn createImage1
 //    imageId = { createImage.getImageId() }
 //    targetImageId { createImage.getImageId() }
-    targetImageId { "grimmjow8/dealership-demo-build" }
+    targetImageId { "grimmjow8/dealership-demo-run" }
     containerName "springboot-dealership-app-run"
     binds = ["${currentDir}":"/app/api"]
     cmd = ["-g", "/tmp/.gradle", "bootRun", "--stacktrace"]
@@ -185,10 +226,14 @@ task waitContainer1(type: DockerWaitContainer) {
     targetContainerId { "springboot-dealership-app-run" }
 }
 
+task clean2() {
+    dependsOn removeImage1
+}
+
 
 // reusing build image
 task runApp() {
-    dependsOn waitContainer1
+    dependsOn clean2, waitContainer1
 }
 
 

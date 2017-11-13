@@ -8,7 +8,12 @@ RUN apt-get update && \
 RUN mkdir -p /app/api
 
 # Add the entire project to build container, CI would just build from git repo
-#ADD . /app/api
+ADD ./build /app/api/build
+ADD ./gradle /app/api/gradle
+ADD ./build.gradle /app/api
+ADD ./gradle.properties /app/api
+ADD ./gradlew /app/api
+ADD ./settings.gradle /app/api
 #RUN rm -rf .gradle
 
 ENV USER_ID 1000
@@ -18,7 +23,7 @@ RUN useradd -u ${USER_ID} -g api -s /bin/bash -m -d /app/api api
 RUN chown api:api -R /app/api
 
 USER api
-VOLUME ["/app/api"]
+# VOLUME ["/app/api"]
 WORKDIR /app/api
 EXPOSE 8080
 #CMD ["./gradlew", "clean", "build"]
