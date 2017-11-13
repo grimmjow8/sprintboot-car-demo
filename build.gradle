@@ -4,7 +4,6 @@ import com.bmuschko.gradle.docker.tasks.container.DockerStartContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerWaitContainer
-import com.bmuschko.gradle.docker.tasks.container.DockerCopyFileFromContainer
 
 
 buildscript {
@@ -65,9 +64,22 @@ dependencies {
     }
     compile("org.springframework.boot:spring-boot-starter-jetty")
     compile("org.springframework.boot:spring-boot-starter-actuator")
+    testCompile('org.testng:testng:6.11')
+
+    testCompile('org.springframework.boot:spring-boot-starter-test:1.5.8.RELEASE')
+
+    testCompile('org.springframework:spring-test')
+    testCompile('org.springframework.boot:spring-boot-test')
+
+//    testCompile group: 'org.testng', name: 'testng', version: '6.11'
+//    compile("com.google.guava:guava:23.4")
 }
 
 //project.setBuildDir("./target")
+
+
+// curl -X POST -d '{"make":"make1","model":"model1","year":2006}' localhost:8080/v1/car ; echo
+// curl -X GET localhost:8080/v1/car ; echo
 
 String getCurrentDir() {
     System.getProperty("user.dir")
