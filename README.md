@@ -6,8 +6,9 @@ Springboot demo app that implements a RESTful application for a car dealership.
 Services
 ====
 - Car information endpoints 
+    - GET    - /v1/car      - retrieve car data (all cars)
+    - GET    - /v1/car/{id} - retrieve car data (single car)
     - POST   - /v1/car      - add car data
-    - GET    - /v1/car/{id} - retrieve car data
     - DELETE - /v1/car/{id} - delete car data
 
 Setup
