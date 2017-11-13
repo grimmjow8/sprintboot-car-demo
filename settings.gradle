@@ -1,0 +1,4 @@
+rootProject.name = 'springboot-dealership-demo'
+//include 'springboot-api'
+//include 'springboot-client'
+//include 'springboot-server'

@@ -1,0 +1,208 @@
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerRemoveImage
+import com.bmuschko.gradle.docker.tasks.container.DockerStartContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerWaitContainer
+
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath(
+//                'org.slf4j:slf4j-simple:1.7.25',
+                'org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE',
+                'com.bmuschko:gradle-docker-plugin:3.0.11'
+
+                //    dependencies { classpath group:'net.ltgt.gradle', name:'gradle-errorrone-plugin', version:'0.0.9'}
+
+        )
+    }
+}
+
+allprojects {
+    // TODO: set?
+    group 'GROUP'
+    version 'VERSION'
+}
+
+//subprojects { sp ->
+apply plugin: 'java'
+apply plugin: 'application'
+//    apply plugin: 'findbugs'
+//    apply plugin: 'project-report'
+//    apply plugin: 'net.ltgt.errorprone'
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'com.bmuschko.docker-remote-api'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+//build.dependsOn 'projectReport'
+
+idea {
+    project {
+        jdkName = '1.8'
+    }
+}
+
+// ./gradlew createDockerImage ; docker run -it grimmjow8/dealership-demo-build bash
+
+dependencies {
+    // TODO add versions
+    //    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+
+//    compile group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+//    testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test'
+//    testCompile group: 'org.testng', name: 'testng', version: '6.11'
+
+
+    compile("org.springframework.boot:spring-boot-starter-web") {
+        exclude module: "spring-boot-starter-tomcat"
+    }
+    compile("org.springframework.boot:spring-boot-starter-jetty")
+    compile("org.springframework.boot:spring-boot-starter-actuator")
+}
+
+String getCurrentDir() {
+    System.getProperty("user.dir")
+}
+
+tasks.withType(JavaCompile) {
+    options.fork = true
+    options.incremental = true
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    from 'build/docs/javadoc'
+    classifier = 'sources'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourcesJar
+}
+
+//task buildImage(type: DockerBuildImage) {
+//    dependsOn dockerfile
+//    inputDir = file("build/docker")
+//}
+
+task removeContainer(type: DockerRemoveContainer) {
+    force = true
+    targetContainerId { "springboot-dealership-app" }
+    onError {
+        println "Failure removing container"
+    }
+}
+
+task removeImage(type: DockerRemoveImage) {
+    dependsOn removeContainer
+    force = true
+//    targetImageId { createImage.getImageId() }
+    targetImageId { "grimmjow8/dealership-demo-build" }
+    onError {
+        println "Failure removing image"
+    }
+
+}
+
+task createImage(type: DockerBuildImage) {
+    inputDir = file('.')
+    dockerFile = file('Dockerfile.build')
+    tags = ['grimmjow8/dealership-demo-build']
+}
+
+
+
+
+task createContainer(type: DockerCreateContainer) {
+    dependsOn createImage
+//    imageId = { createImage.getImageId() }
+//    targetImageId { createImage.getImageId() }
+    targetImageId { "grimmjow8/dealership-demo-build" }
+    containerName "springboot-dealership-app"
+    binds = ["${currentDir}":"/app/api"]
+    cmd = ["-g", "/tmp/.gradle", "clean", "build"]
+}
+task startContainer(type: DockerStartContainer) {
+    dependsOn createContainer
+//    targetContainerId { createContainer.getContainerId() }
+    targetContainerId { "springboot-dealership-app" }
+
+}
+
+task waitContainer(type: DockerWaitContainer) {
+    dependsOn startContainer
+//    finalizedBy removeImage
+
+    targetContainerId { "springboot-dealership-app" }
+}
+
+task clean1() {
+    dependsOn removeImage
+}
+
+task buildApp() {
+    dependsOn clean1, waitContainer
+}
+
+
+
+
+// overrid eentrypoint
+// docker run --entrypoint "/bin/ls" debian -al /root
+
+
+
+// docker run -it -v "/home/grimmjow/data/development/ideaProjects/sprintboot-dealership-demo:/build" -p "8080:8080" grimmjow8/dealership-demo-build bash
+task createContainer1(type: DockerCreateContainer) {
+//    imageId = { createImage.getImageId() }
+//    targetImageId { createImage.getImageId() }
+    targetImageId { "grimmjow8/dealership-demo-build" }
+    containerName "springboot-dealership-app-run"
+    binds = ["${currentDir}":"/app/api"]
+    cmd = ["-g", "/tmp/.gradle", "bootRun", "--stacktrace"]
+    portBindings = ["8080:8080"]
+}
+task startContainer1(type: DockerStartContainer) {
+    dependsOn createContainer1
+//    targetContainerId { createContainer.getContainerId() }
+    targetContainerId { "springboot-dealership-app-run" }
+
+}
+
+task waitContainer1(type: DockerWaitContainer) {
+    dependsOn startContainer1
+    targetContainerId { "springboot-dealership-app-run" }
+}
+
+
+// reusing build image
+task runApp() {
+    dependsOn waitContainer1
+}
+
+
+
+//task stopContainer(type: DockerStopContainer) {
+//    targetContainerId { createMyAppContainer.getContainerId() }
+//}
+
+
+
+
+
+test {
+    useTestNG()
+}
+
+//}
