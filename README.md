@@ -27,6 +27,18 @@ Usage
     - $ curl -X POST -H "Content-Type: application/json" -d '{"make":"make1","model":"model1","year":2006}' localhost:8080/v1/car
     - $ curl -X DELETE -H "Content-Type: application/json" localhost:8080/v1/car/4b66ff46-fd55-4c0e-b882-7e5d36802622
 
+Assumptions/Design Decisions
+====
+Below are a list of assumptions made during development:
+- No update of car information, information is added & removed all at once.
+- Limited scope by only supporting the following fields: make, model, year.
+- Stored information in-memory using a ConcurrentHashMap.
+- Integration testing added for the endpoints, while unit tests added for the service and error layer.
+- Gradle/Docker build process used to make it easier for others to test/verify.
+- Support localization of error strings.
+- Support error handling for invalid IDs and duplicate data.
+- No error handling provided for data sanitation.
+
 Future
 ====
 - [ ] Add Swagger
