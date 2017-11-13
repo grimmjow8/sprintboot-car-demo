@@ -1,8 +1,10 @@
-package com.grimmjow8.examples.dealership.restapi.model;
-
+package com.grimmjow8.examples.dealership.restapi.models;
 
 import java.util.Objects;
 
+/**
+ * Car model.
+ */
 public class Car {
     private String id;
     private String make;
@@ -73,6 +75,6 @@ public class Car {
 
     @Override
     public String toString() {
-        return "make: " + make + ", model: " + model + ", year: " + Integer.toString(year);
+        return "make: " + make + ", models: " + model + ", year: " + Integer.toString(year);
     }
 }

@@ -12,35 +12,25 @@ buildscript {
     }
     dependencies {
         classpath(
-//                'org.slf4j:slf4j-simple:1.7.25',
-                'org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE',
-                'com.bmuschko:gradle-docker-plugin:3.0.11'
-
-                //    dependencies { classpath group:'net.ltgt.gradle', name:'gradle-errorrone-plugin', version:'0.0.9'}
-
+            'org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE',
+            'com.bmuschko:gradle-docker-plugin:3.0.11'
         )
     }
 }
 
 allprojects {
-    // TODO: set?
-    group 'GROUP'
-    version 'VERSION'
+    version '0.0.1'
 }
 
-//subprojects { sp ->
+// TODO: add optional plugins 'findbugs', 'project-report', 'net.ltgt.errorprone'
 apply plugin: 'java'
 apply plugin: 'application'
-//    apply plugin: 'findbugs'
-//    apply plugin: 'project-report'
-//    apply plugin: 'net.ltgt.errorprone'
 apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'com.bmuschko.docker-remote-api'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-//build.dependsOn 'projectReport'
 
 idea {
     project {
@@ -48,38 +38,21 @@ idea {
     }
 }
 
-// ./gradlew createDockerImage ; docker run -it grimmjow8/dealership-demo-build bash
-
 dependencies {
-    // TODO add versions
-    //    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
-
-//    compile group: 'org.springframework.boot', name: 'spring-boot-starter-web'
-//    testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test'
-//    testCompile group: 'org.testng', name: 'testng', version: '6.11'
-
-
     compile("org.springframework.boot:spring-boot-starter-web") {
         exclude module: "spring-boot-starter-tomcat"
     }
     compile("org.springframework.boot:spring-boot-starter-jetty")
     compile("org.springframework.boot:spring-boot-starter-actuator")
+
     testCompile('org.testng:testng:6.11')
-
-    testCompile('org.springframework.boot:spring-boot-starter-test:1.5.8.RELEASE')
-
+    testCompile('org.springframework.boot:spring-boot-starter-test')
     testCompile('org.springframework:spring-test')
     testCompile('org.springframework.boot:spring-boot-test')
-
-//    testCompile group: 'org.testng', name: 'testng', version: '6.11'
-//    compile("com.google.guava:guava:23.4")
 }
 
+// override output directory
 //project.setBuildDir("./target")
-
-
-// curl -X POST -d '{"make":"make1","model":"model1","year":2006}' localhost:8080/v1/car ; echo
-// curl -X GET localhost:8080/v1/car ; echo
 
 String getCurrentDir() {
     System.getProperty("user.dir")
@@ -106,160 +79,126 @@ artifacts {
     archives sourcesJar
 }
 
-//task buildImage(type: DockerBuildImage) {
-//    dependsOn dockerfile
-//    inputDir = file("build/docker")
-//}
 
-task removeContainer(type: DockerRemoveContainer) {
+/**
+ * Docker related tasks
+ */
+
+// compile related docker tasks
+// TODO: eliminate redundancy of docker related tasks
+project.ext.build = [
+    dockerfile: "Dockerfile.build",
+    imageName: "grimmjow8/dealership-demo-build",
+    containerName: "springboot-car-demo-build"
+]
+
+task buildRemoveContainer(type: DockerRemoveContainer, group: "build") {
     force = true
-    targetContainerId { "springboot-dealership-app" }
+    targetContainerId { project.build.containerName }
     onError {
-        println "Failure removing container"
+        println "Failed removing build container"
     }
 }
 
-task removeImage(type: DockerRemoveImage) {
-    dependsOn removeContainer
+task buildRemoveImage(type: DockerRemoveImage, group: "build") {
+    dependsOn buildRemoveContainer
     force = true
-//    targetImageId { createImage.getImageId() }
-    targetImageId { "grimmjow8/dealership-demo-build" }
+    targetImageId { project.build.imageName }
     onError {
-        println "Failure removing image"
+        println "Failed removing build image"
     }
-
 }
 
-task createImage(type: DockerBuildImage) {
+task buildCreateImage(type: DockerBuildImage, group: "build") {
     inputDir = file('.')
-    dockerFile = file('Dockerfile.build')
-    tags = ['grimmjow8/dealership-demo-build']
+    dockerFile = file(project.build.dockerfile)
+    tags = [project.build.imageName]
 }
 
-
-
-
-task createContainer(type: DockerCreateContainer) {
-    dependsOn createImage
-//    imageId = { createImage.getImageId() }
-//    targetImageId { createImage.getImageId() }
-    targetImageId { "grimmjow8/dealership-demo-build" }
-    containerName "springboot-dealership-app"
+task buildCreateContainer(type: DockerCreateContainer, group: "build") {
+    dependsOn buildCreateImage
+    targetImageId { project.build.imageName }
+    containerName project.build.containerName
     binds = ["${currentDir}":"/app/api"]
-    cmd = ["-g", "/tmp/.gradle", "clean", "build"]
-}
-task startContainer(type: DockerStartContainer) {
-    dependsOn createContainer
-//    targetContainerId { createContainer.getContainerId() }
-    targetContainerId { "springboot-dealership-app" }
+    cmd = ["clean", "build"]
 }
 
-task waitContainer(type: DockerWaitContainer) {
-    dependsOn startContainer
-//    finalizedBy removeImage
-
-    targetContainerId { "springboot-dealership-app" }
-//    doLast {
-//        copyContents
-//    }
+task buildStartContainer(type: DockerStartContainer, group: "build") {
+    dependsOn buildCreateContainer
+    targetContainerId { project.build.containerName }
 }
 
-//task copyContents(type: DockerCopyFileFromContainer) {
-//    dependsOn waitContainer
-//    hostPath "${currentDir}/build2"
-//    remotePath "/app/build"
-//    targetContainerId { "springboot-dealership-app" }
-//
-//}
-
-
-
-task clean1() {
-    dependsOn removeImage
+task buildWaitContainer(type: DockerWaitContainer, group: "build") {
+    dependsOn buildStartContainer
+    targetContainerId { project.build.containerName }
 }
 
-task buildApp() {
-    dependsOn clean1, waitContainer
+task buildClean(group: "build") {
+    dependsOn buildRemoveImage
 }
 
+task buildApp(group: "build") {
+    dependsOn buildClean, buildWaitContainer
+}
 
+// execution related docker tasks
+project.ext.run = [
+    dockerfile: "Dockerfile.run",
+    imageName: "grimmjow8/dealership-demo-run",
+    containerName: "springboot-car-demo-run"
+]
 
-
-// overrid eentrypoint
-// docker run --entrypoint "/bin/ls" debian -al /root
-
-
-
-task removeContainer1(type: DockerRemoveContainer) {
+task runRemoveContainer(type: DockerRemoveContainer, group: "run") {
     force = true
-    targetContainerId { "springboot-dealership-app-run" }
+    targetContainerId { project.run.containerName }
     onError {
-        println "Failure removing run container"
+        println "Failed removing run container"
     }
 }
 
-task removeImage1(type: DockerRemoveImage) {
-    dependsOn removeContainer1
+task runRemoveImage(type: DockerRemoveImage, group: "run") {
+    dependsOn runRemoveContainer
     force = true
-    targetImageId { "grimmjow8/dealership-demo-run" }
+    targetImageId { project.run.imageName }
     onError {
-        println "Failure removing run image"
+        println "Failed removing run image"
     }
-
 }
 
-task createImage1(type: DockerBuildImage) {
+task runCreateImage(type: DockerBuildImage, group: "run") {
     inputDir = file('.')
-    dockerFile = file('Dockerfile.run')
-    tags = ['grimmjow8/dealership-demo-run']
+    dockerFile = file(project.run.dockerfile)
+    tags = [project.run.imageName]
 }
 
-
-// docker run -it -v "/home/grimmjow/data/development/ideaProjects/sprintboot-dealership-demo:/build" -p "8080:8080" grimmjow8/dealership-demo-build bash
-task createContainer1(type: DockerCreateContainer) {
-    dependsOn createImage1
-//    imageId = { createImage.getImageId() }
-//    targetImageId { createImage.getImageId() }
-    targetImageId { "grimmjow8/dealership-demo-run" }
-    containerName "springboot-dealership-app-run"
+task runCreateContainer(type: DockerCreateContainer, group: "run") {
+    dependsOn runCreateImage
+    targetImageId { project.run.imageName }
+    containerName project.run.containerName
     binds = ["${currentDir}":"/app/api"]
-    cmd = ["-g", "/tmp/.gradle", "bootRun", "--stacktrace"]
+    cmd = ["bootRun", "--stacktrace"]
     portBindings = ["8080:8080"]
 }
-task startContainer1(type: DockerStartContainer) {
-    dependsOn createContainer1
-//    targetContainerId { createContainer.getContainerId() }
-    targetContainerId { "springboot-dealership-app-run" }
 
+task runStartContainer(type: DockerStartContainer, group: "run") {
+    dependsOn runCreateContainer
+    targetContainerId { project.run.containerName }
 }
 
-task waitContainer1(type: DockerWaitContainer) {
-    dependsOn startContainer1
-    targetContainerId { "springboot-dealership-app-run" }
+task runWaitContainer(type: DockerWaitContainer, group: "run") {
+    dependsOn runStartContainer
+    targetContainerId { project.run.containerName }
 }
 
-task clean2() {
-    dependsOn removeImage1
+task runClean(group: "run") {
+    dependsOn runRemoveImage
 }
 
-
-// reusing build image
-task runApp() {
-    dependsOn clean2, waitContainer1
+task runApp(group: "run") {
+    dependsOn runClean, runWaitContainer
 }
 
 
-
-//task stopContainer(type: DockerStopContainer) {
-//    targetContainerId { createMyAppContainer.getContainerId() }
-//}
-
-
-
-
-
-test {
-    useTestNG()
-}
-
+//test {
+//    useTestNG()
 //}
